@@ -18,24 +18,47 @@ interface FileProps {
   readableSize: string;
 }
 
+interface File {
+  name: string;
+  path: string;
+  size: number;
+  lastModified: Date;
+  lastModifiedDate: Date;
+  type: string;
+  webkitRelativePath: string;
+}
+
 const Import: React.FC = () => {
   const [uploadedFiles, setUploadedFiles] = useState<FileProps[]>([]);
   const history = useHistory();
 
   async function handleUpload(): Promise<void> {
-    // const data = new FormData();
+    if (!uploadedFiles.length) return;
+  
+    const files:File[] = uploadedFiles.map( uploadFile => uploadFile.file );
 
-    // TODO
+    const data = new FormData();
+    data.append('file', JSON.stringify(files));    
 
     try {
-      // await api.post('/transactions/import', data);
+      await api.post('/transactions/import', data);
+      history.push('/');
     } catch (err) {
-      // console.log(err.response.error);
+      console.log(err.response.error);
     }
   }
 
   function submitFile(files: File[]): void {
-    // TODO
+    
+    if (files.length === 0) return;
+    
+    const filesProps: FileProps[] = files.map( file => ({
+        file,
+        name: file.name,
+        readableSize: file.size.toString()
+    }));
+
+    setUploadedFiles({...uploadedFiles, ...filesProps});
   }
 
   return (
@@ -45,8 +68,9 @@ const Import: React.FC = () => {
         <Title>Importar uma transação</Title>
         <ImportFileContainer>
           <Upload onUpload={submitFile} />
-          {!!uploadedFiles.length && <FileList files={uploadedFiles} />}
-
+          {
+            !!uploadedFiles.length && <FileList files={uploadedFiles} />
+          }
           <Footer>
             <p>
               <img src={alert} alt="Alert" />
